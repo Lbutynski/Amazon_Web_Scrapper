@@ -1,8 +1,8 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient } from "mongodb";
 import puppeteer from "puppeteer";
 import { setTimeout } from "timers/promises";
-import dotenv from 'dotenv';
-   dotenv.config();
+import dotenv from "dotenv";
+dotenv.config();
 
 const categories = [
   "sports",
@@ -35,13 +35,11 @@ const categories = [
   "pet-supplies",
 ];
 
-
 const uri = process.env.COSMOSDB_CONNECTION_STRING;
 const client = new MongoClient(uri);
 
 let allCategoriesProducts = {};
-
-(async () => {
+const updateDB = async () => {
   await client.connect();
   const database = client.db("amazon-scrapper");
   const collection = database.collection("produits");
@@ -75,12 +73,12 @@ let allCategoriesProducts = {};
 
         const ratingText = element
           .querySelector(".a-icon-row .a-link-normal")
-          ?.getAttribute("title"); 
-        const rating = ratingText ? ratingText.split(" ")[0] : null; 
+          ?.getAttribute("title");
+        const rating = ratingText ? ratingText.split(" ")[0] : null;
         const votesText = element.querySelector(
           ".a-icon-row .a-size-small"
-        )?.textContent; 
-        const votes = votesText ? votesText.replace(/[^\d]/g, "") : null; 
+        )?.textContent;
+        const votes = votesText ? votesText.replace(/[^\d]/g, "") : null;
 
         items.push({
           rank,
@@ -89,7 +87,7 @@ let allCategoriesProducts = {};
           url,
           price,
           rating,
-          votes, 
+          votes,
         });
       }
 
@@ -98,13 +96,15 @@ let allCategoriesProducts = {};
 
     allCategoriesProducts[category] = products;
 
-    await collection.insertMany(products.map(product => ({ ...product, category })));
+    await collection.insertMany(
+      products.map((product) => ({ ...product, category }))
+    );
 
     await page.close();
   }
 
   await browser.close();
-  await client.close(); 
+  await client.close();
   console.log("Successfully updated the database with the products");
-})();
-
+};
+export default updateDB;
